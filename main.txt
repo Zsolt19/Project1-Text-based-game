@@ -1,0 +1,111 @@
+from Room import Room
+from Item import Item
+from Character import Character, Enemy, Friend
+
+# Set up rooms
+kitchen = Room()
+kitchen.set_name("Kitchen")
+kitchen.set_description("A dank and dirty room buzzing with flies.")
+
+ballroom = Room()
+ballroom.set_name("Ballroom")
+ballroom.set_description("A vast room with a shiny wooden floor; huge candlesticks guard the entrance.")
+
+dining_hall = Room()
+dining_hall.set_name("Dining Hall")
+dining_hall.set_description("A large room with ornate golden decorations on each wall.")
+
+# Link rooms
+kitchen.link_room(dining_hall, "south")
+dining_hall.link_room(kitchen, "north")
+dining_hall.link_room(ballroom, "west")
+ballroom.link_room(dining_hall, "east")
+
+# Create enemy
+goblin = Enemy()
+goblin.set_name("Goblin")
+goblin.set_description("A nasty little creature with sharp teeth.")
+goblin.set_weakness("sword")
+kitchen.set_character(goblin)
+
+# Create friend with key
+key = Item()
+key.set_name("Golden Key")
+key.set_description("A shiny golden key that might open something important.")
+
+friend = Friend()
+friend.set_name("Gandalf")
+friend.set_description("A wise old wizard with a long beard.")
+friend.set_conversation("You shall not pass!... unless you ask nicely.")
+friend.set_item(key)
+ballroom.set_character(friend)
+
+# Create sword item
+sword = Item()
+sword.set_name("Sword")
+sword.set_description("A sharp steel sword, useful for fighting enemies.")
+dining_hall.set_item(sword)
+
+current_room = kitchen
+inventory = []
+
+print("Welcome to the game! Here are your possible commands:")
+print("- north, south, east, west: Move between rooms")
+print("- talk: Speak with a character in the room")
+print("- fight: Engage in combat with an enemy")
+print("- ask: Request an item from a friend")
+print("- take: Pick up an item in the room")
+print("- use key: Use the golden key to unlock a door and win")
+print("- exit: Quit the game")
+
+while True:
+    print("\n")
+    current_room.describe()
+    command = input("> ").lower()
+    
+    if command in ["north", "south", "east", "west"]:
+        current_room = current_room.move(command)
+    elif command == "talk":
+        if current_room.get_character():
+            current_room.get_character().talk()
+        else:
+            print("There is no one to talk to here.")
+    elif command == "fight":
+        if isinstance(current_room.get_character(), Enemy):
+            weapon = input("Choose your weapon: ")
+            if any(item.get_name().lower() == weapon.lower() for item in inventory):
+                if current_room.get_character().fight(weapon):
+                    print("You defeated the enemy!")
+                    current_room.set_character(None)
+                else:
+                    print("You have been defeated! Game Over.")
+                    break
+            else:
+                print("You don't have that weapon!")
+        else:
+            print("There is no enemy here to fight.")
+    elif command == "ask":
+        if isinstance(current_room.get_character(), Friend):
+            item_received = current_room.get_character().give_item()
+            if item_received:
+                inventory.append(item_received)
+        else:
+            print("There is no one to ask here.")
+    elif command == "take":
+        if current_room.get_item():
+            inventory.append(current_room.get_item())
+            print(f"You picked up the {current_room.get_item().get_name()}.")
+            current_room.set_item(None)
+        else:
+            print("There is nothing to take here.")
+    elif command == "use key":
+        if any(item.get_name() == "Golden Key" for item in inventory):
+            print("You used the Golden Key to unlock the final door! You win the game!")
+            break
+        else:
+            print("You don't have the key.")
+    elif command == "exit":
+        print("Thanks for playing!")
+        break
+    else:
+        print("Invalid command. Type a valid command from the list above.")
